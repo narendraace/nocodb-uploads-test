@@ -1,0 +1,26 @@
+#version: '3.8'
+
+services:
+  php-fpm:
+    container_name: php
+    image: php:8.2-fpm-alpine
+    volumes:
+      - ./src:/var/www/html
+#    entrypoint: ["/bin/sh", "/var/www/html/entrypoint.sh"]
+    command: ["php-fpm"]
+    restart: always
+#    command: ["php-fpm","chmod", "-R", "777","/var/www/html/src"]
+#    command: sh -c "chmod -R 777 /var/www/html/src && php-fpm"
+  nginx:
+    container_name: upload_server
+    image: nginx:alpine
+    ports:
+      - "9000:80"
+    volumes:
+      - ./src:/var/www/html
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+ #   entrypoint: ["/bin/sh", "/var/www/html/entrypoint.sh"]
+    command: ["nginx", "-g", "daemon off;"]
+    restart: always
+    depends_on:
+      - php-fpm
