@@ -1,0 +1,69 @@
+name: "Build and Push Docker Image"
+on:
+  push:
+    branches:
+      - main # Trigger this workflow when code is pushed to the main branch
+      - stage # Trigger this workflow when code is pushed to the stage branch
+jobs:
+  main-branch-job:
+    if: github.ref == 'refs/heads/main' # Runs only for the main branch
+    runs-on: shopify-api # Specify the label of the runner for the main branch
+    steps:
+      # Step 1: Check out code from the repository
+      - name: Check out code
+        uses: actions/checkout@v2  # This checks out your code from GitHub
+      # Step 4: Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}   # Add your Docker Hub username as a secret
+          password: ${{ secrets.DOCKER_PASSWORD }}   # Add your Docker Hub password as a secret
+      # Step 4.1: Shutdown docker 
+      - name: Shutdown docker
+        if: ${{ success() }}  # Run only if the previous step succeeds
+        run: |
+          set -e  # Exit immediately if any command fails
+          docker compose down
+      # Step 4.2: Restart existing docker to load with newer image 
+      - name: Restart existing docker
+        if: ${{ success() }}  # Run only if the previous step succeeds
+        run: |
+          export TAG=${{ github.sha }}
+          docker compose up -d
+      # Step 4.3: Remove existing docker image 
+      - name: Remove existing docker image
+        if: ${{ success() }}  # Run only if the previous step succeeds
+        run: |
+          set -e  # Exit immediately if any command fails
+          docker image prune -a -f
+  stage-branch-job:
+    if: github.ref == 'refs/heads/stage' # Runs only for the stage branch
+    runs-on: shopify-api-stage # Specify the label of the runner for the stage branch
+    steps:
+      # Step 1: Check out code from the repository
+      - name: Check out code
+        uses: actions/checkout@v2  # This checks out your code from GitHub
+      # Step 4: Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}   # Add your Docker Hub username as a secret
+          password: ${{ secrets.DOCKER_PASSWORD }}   # Add your Docker Hub password as a secret
+      # Step 4.1: Shutdown docker 
+      - name: Shutdown docker
+        if: ${{ success() }}  # Run only if the previous step succeeds
+        run: |
+          set -e  # Exit immediately if any command fails
+          docker compose down
+      # Step 4.2: Restart existing docker to load with newer image 
+      - name: Restart existing docker
+        if: ${{ success() }}  # Run only if the previous step succeeds
+        run: |
+          export TAG=${{ github.sha }}
+          docker compose up -d
+      # Step 4.3: Remove existing docker image 
+      - name: Remove existing docker image
+        if: ${{ success() }}  # Run only if the previous step succeeds
+        run: |
+          set -e  # Exit immediately if any command fails
+          docker image prune -a -f
